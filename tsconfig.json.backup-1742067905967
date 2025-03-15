@@ -1,0 +1,32 @@
+{
+  "compilerOptions": {
+    /* Basic Options */
+    "target": "ES2021", // Specify the ECMAScript target version
+    "module": "commonjs", // Specify the module code generation
+    "lib": ["ES2021", "DOM"], // Specify library files to be included in the compilation
+    "allowJs": true, // Allow JavaScript files to be compiled
+    "checkJs": true, // Report errors in .js files
+    "outDir": "./dist", // Redirect output structure to the directory
+    "rootDir": "./src", // Specify the root directory of input files
+    "removeComments": true, // Remove comments from the output
+    "strict": true, // Enable all strict type-checking options
+    "esModuleInterop": true, // Enable compatibility with ES modules
+    "skipLibCheck": true, // Skip type checking of declaration files
+    "forceConsistentCasingInFileNames": true, // Ensure consistent casing in file names
+
+    /* Paths and Base URL */
+    "baseUrl": "./", // Base directory to resolve non-relative module names
+    "paths": {
+      "@app/*": ["src/*"] // Map @app/* to the src directory
+    },
+
+    /* Source Maps */
+    "sourceMap": true, // Generate corresponding .map files
+    "inlineSources": true, // Include source files in the source maps
+
+    /* Incremental Compilation */
+    "incremental": true // Enable incremental compilation
+  },
+  "include": ["src/**/*"], // Include all files in the src directory
+  "exclude": ["node_modules", "dist"] // Exclude node_modules and dist directories
+}
