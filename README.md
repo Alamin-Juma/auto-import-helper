@@ -1,6 +1,7 @@
-# import-aliases
-[![npm version](https://badge.fury.io/js/import-aliases.svg)](https://www.npmjs.com/package/import-aliases)
 
+Download the package at: [![npm version](https://badge.fury.io/js/import-aliases.svg)](https://www.npmjs.com/package/import-aliases)
+
+# import-aliases
 
 A robust and flexible library for setting up absolute path imports with aliases like `@app/` in JavaScript and TypeScript projects.
 
