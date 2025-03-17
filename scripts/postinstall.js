@@ -204,3 +204,9 @@ if (shouldRun) {
   console.log('Skipping auto-import-helper setup in production environment.');
   console.log('To force setup, set FORCE_POSTINSTALL=true');
 }
+
+module.exports = {
+  runPostInstall,
+  updateConfig,
+  getProjectRoot,
+};

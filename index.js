@@ -1,5 +1,6 @@
 // index.js
 const moduleAlias = require('module-alias');
+const tsconfigPaths = require('tsconfig-paths');
 const path = require('path');
 const fs = require('fs');
 
@@ -19,18 +20,23 @@ function setupAliases(options = {}) {
   } = options;
   
   const log = verbose ? console.log : () => {};
-  let config;
-  let configFile;
   
   try {
     // If configPath is specified, try to load that
     if (configPath) {
-      configFile = path.resolve(process.cwd(), configPath);
+      const configFile = path.resolve(process.cwd(), configPath);
       if (!fs.existsSync(configFile)) {
         throw new Error(`Config file not found: ${configFile}`);
       }
-      config = require(configFile);
       log(`Using config file: ${configFile}`);
+      
+      if (configFile.endsWith('tsconfig.json')) {
+        return registerTSPaths(configFile, { verbose, customAliases });
+      } else if (configFile.endsWith('jsconfig.json')) {
+        return registerJSPaths(configFile, { verbose, customAliases });
+      } else {
+        throw new Error('Config file must be either tsconfig.json or jsconfig.json');
+      }
     } 
     // Otherwise look for tsconfig.json or jsconfig.json
     else {
@@ -38,51 +44,116 @@ function setupAliases(options = {}) {
       const jsConfigPath = path.resolve(process.cwd(), 'jsconfig.json');
       
       if (fs.existsSync(tsConfigPath)) {
-        configFile = tsConfigPath;
-        config = require(tsConfigPath);
         log('Using tsconfig.json');
+        return registerTSPaths(tsConfigPath, { verbose, customAliases });
       } else if (fs.existsSync(jsConfigPath)) {
-        configFile = jsConfigPath;
-        config = require(jsConfigPath);
         log('Using jsconfig.json');
+        return registerJSPaths(jsConfigPath, { verbose, customAliases });
       } else {
         throw new Error('No tsconfig.json or jsconfig.json found');
       }
     }
+  } catch (error) {
+    console.error('Error setting up auto-import aliases:', error.message);
+    return {};
+  }
+}
 
+/**
+ * Registers TypeScript path aliases from a tsconfig.json file
+ * @param {string} configPath Path to the tsconfig.json file
+ * @param {Object} options Configuration options
+ * @param {boolean} options.verbose Whether to log detailed information
+ * @param {Object} options.customAliases Custom aliases to add
+ * @returns {Object} The registered paths and aliases
+ */
+function registerTSPaths(configPath, options = {}) {
+  const { verbose = false, customAliases = {} } = options;
+  const log = verbose ? console.log : () => {};
+  
+  try {
+    const configContent = fs.readFileSync(configPath, 'utf8');
+    const config = JSON.parse(configContent);
+    
     const { paths, baseUrl } = config.compilerOptions || {};
+    
+    if (!paths || !baseUrl) {
+      throw new Error('No paths or baseUrl found in tsconfig.json');
+    }
+    
+    log(`Found baseUrl: ${baseUrl}`);
+    log('Found paths:', paths);
+    
+    // Register with tsconfig-paths
+    tsconfigPaths.register({
+      baseUrl: path.resolve(path.dirname(configPath), baseUrl),
+      paths: paths
+    });
+    
+    // Also register for module-alias if custom aliases are provided
+    if (Object.keys(customAliases).length > 0) {
+      moduleAlias.addAliases(customAliases);
+    }
+    
+    if (verbose) {
+      console.log('TypeScript path aliases have been set up successfully!');
+    }
+    
+    return { paths, baseUrl };
+  } catch (error) {
+    console.error('Error registering TypeScript paths:', error.message);
+    return {};
+  }
+}
+
+/**
+ * Registers JavaScript path aliases from a jsconfig.json file
+ * @param {string} configPath Path to the jsconfig.json file
+ * @param {Object} options Configuration options
+ * @param {boolean} options.verbose Whether to log detailed information
+ * @param {Object} options.customAliases Custom aliases to add
+ * @returns {Object} The registered aliases
+ */
+function registerJSPaths(configPath, options = {}) {
+  const { verbose = false, customAliases = {} } = options;
+  const log = verbose ? console.log : () => {};
+  
+  try {
+    const configContent = fs.readFileSync(configPath, 'utf8');
+    const config = JSON.parse(configContent);
+    
+    const { paths, baseUrl } = config.compilerOptions || {};
+    
+    if (!paths || !baseUrl) {
+      throw new Error('No paths or baseUrl found in jsconfig.json');
+    }
+    
+    log(`Found baseUrl: ${baseUrl}`);
+    log('Found paths:', paths);
+    
     const aliases = { ...customAliases };
     
-    if (paths && baseUrl) {
-      log(`Found baseUrl: ${baseUrl}`);
-      log('Found paths:', paths);
+    // Process each alias defined in config
+    Object.keys(paths).forEach((alias) => {
+      // Remove trailing wildcards (/*) for the key and value
+      const cleanAlias = alias.replace(/\/\*$/, '');
+      const aliasPath = paths[alias][0].replace(/\/\*$/, '');
+      const fullPath = path.resolve(path.dirname(configPath), baseUrl, aliasPath);
       
-      // Process each alias defined in config
-      Object.keys(paths).forEach((alias) => {
-        // Remove trailing wildcards (/*) for the key and value
-        const cleanAlias = alias.replace(/\/\*$/, '');
-        const aliasPath = paths[alias][0].replace(/\/\*$/, '');
-        const fullPath = path.resolve(process.cwd(), baseUrl, aliasPath);
-        
-        aliases[cleanAlias] = fullPath;
-        log(`Registered alias: ${cleanAlias} -> ${fullPath}`);
-      });
-    } else if (Object.keys(customAliases).length === 0) {
-      console.warn('No paths or baseUrl found in config file. No aliases will be set up.');
-      return {};
-    }
-
-    // Register the aliases
+      aliases[cleanAlias] = fullPath;
+      log(`Registered alias: ${cleanAlias} -> ${fullPath}`);
+    });
+    
+    // Register the aliases with module-alias
     moduleAlias.addAliases(aliases);
     
     if (verbose) {
-      console.log('Auto-import aliases have been set up successfully!');
-      console.log('Registered aliases:', aliases);
+      console.log('JavaScript path aliases have been set up successfully!');
     }
     
     return aliases;
   } catch (error) {
-    console.error('Error setting up auto-import aliases:', error.message);
+    console.error('Error registering JavaScript paths:', error.message);
     return {};
   }
 }
@@ -154,5 +225,7 @@ function createConfigWithAliases(options = {}) {
 
 module.exports = { 
   setupAliases,
+  registerTSPaths,
+  registerJSPaths,
   createConfigWithAliases
 };
