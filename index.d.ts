@@ -1,5 +1,5 @@
-declare module 'auto-import-helper' {
-    /**
+declare module 'import-aliases' {
+  /**
      * Options for setting up module aliases
      */
     export interface SetupAliasesOptions {

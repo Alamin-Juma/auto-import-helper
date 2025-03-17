@@ -1,4 +1,6 @@
-# Auto Import Helper
+# import-aliases
+[![npm version](https://badge.fury.io/js/import-aliases.svg)](https://www.npmjs.com/package/import-aliases)
+
 
 A robust and flexible library for setting up absolute path imports with aliases like `@app/` in JavaScript and TypeScript projects.
 
@@ -14,20 +16,23 @@ A robust and flexible library for setting up absolute path imports with aliases 
 ## Installation
 
 ```bash
-npm install auto-import-helper```
+npm install import-aliases
+```
 
 Basic Usage
 In your entry file (e.g., index.js, app.js, or main.ts):
 
 ```javascript
 // Register aliases at the very beginning of your app
-const { setupAliases } = require('auto-import-helper');
+const { setupAliases } = require('import-aliases');
 setupAliases();
 
 // Now you can use absolute imports:
 const myModule = require('@app/modules/myModule');
+
 // Or with ES imports:
 // import { myComponent } from '@app/components/myComponent';
+
 ```
 
 Configuration
@@ -136,6 +141,3 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 License
 MIT
-
-
-This `README.md` file provides a comprehensive guide to using the `auto-import-helper` library, including installation, basic and advanced usage, configuration, examples, and more. You can copy and paste this content directly into your project's `README.md` file.
